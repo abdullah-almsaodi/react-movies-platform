@@ -16,12 +16,15 @@ const API_OPTIONS = {
 };
 const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [movieList, setMovieList] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [trendingMovies, setTrendingMovies] = useState();
-
   const [debounceSearchTerm, setDebounceSearchTerm] = useState("");
+
+  const [movieList, setMovieList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [trendingMovies, setTrendingMovies] = useState();
+  const [errorMessageTrending, setErrorMessageTrending] = useState("");
+  const [isLoadingTrending, setIsLoadingTrending] = useState(false);
 
   // Debounce the search term to prevent making too many API requests
   // by waiting for the user to stop typing for 500ms
@@ -58,8 +61,17 @@ const App = () => {
   };
 
   const loadTrendingMovies = async () => {
-    const movies = await getTrendingMovies();
-    setTrendingMovies(movies);
+    setIsLoading(true);
+    setErrorMessageTrending("");
+    try {
+      const movies = await getTrendingMovies();
+      setTrendingMovies(movies);
+    } catch (error) {
+      console.error(`Error fetching trending movies ${error}`);
+      setErrorMessageTrending("failed to fetch trending movies");
+    } finally {
+      setIsLoadingTrending(false);
+    }
   };
 
   useEffect(() => {
@@ -84,14 +96,20 @@ const App = () => {
           {trendingMovies ? (
             <section className="trending">
               <h2>Trending Movies</h2>
-              <ul>
-                {trendingMovies.map((movie, index) => (
-                  <li key={movie.id}>
-                    <p>{index + 1}</p>
-                    <img src={movie.poster_url} alt={movie.title} />
-                  </li>
-                ))}
-              </ul>
+              {isLoadingTrending ? (
+                <Spinner />
+              ) : errorMessageTrending ? (
+                <p className="text-red-500"> {errorMessageTrending}</p>
+              ) : (
+                <ul>
+                  {trendingMovies.map((movie, index) => (
+                    <li key={movie.id}>
+                      <p>{index + 1}</p>
+                      <img src={movie.poster_url} alt={movie.title} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           ) : null}
           <section className="all-movies">
